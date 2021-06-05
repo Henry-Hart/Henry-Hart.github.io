@@ -10,12 +10,12 @@ function create() {
 
      Stuff added:
 
-     - compatibility for firefox (previously the text was messed up)
+     - a function to help with compatibility
      - touchscreen flexibility
 
      TODO:
 
-     - find a good way of fixing the firefox text problem
+     - reliable compatibility for firefox (sometimes the text is messed up)
      - bug reporting system
 
      */
@@ -44,9 +44,11 @@ function create() {
 
 
     //offsets for firefox
+    _g.mozArray = [-77,-154,-59,-46,-77,-87,-87,-71,-68]
+    //[-85,-142,-67,-40,-85,-87,-87,-71,-68]
     const {userAgent} = navigator;
     userAgent.match(/firefox/i) !== null ?
-    _g.mozArray = [-85,-142,-67,-40,-85,-87,-87,-71,-68] : //need to change in future, but works for now
+    alert("incompatible browser, text may be messed up!") :
     _g.mozArray = [0,0,0,0,0,0,0,0,0];
 
     //for development
