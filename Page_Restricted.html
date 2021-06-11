@@ -43,7 +43,7 @@
 			var results = regex.exec( window.location.href );
 			var key = ""
 			if ( results != null ) {
-				key = decodeURIComponent(results[1].replace(/\+/g,  " "));
+				key = encodeURIComponent(results[1].replace(/\+/g,  " "));
 			}
 			if(key) {
 					document.cookie = "key="+key+";expires=Tue, 19 Jan 2038 03:14:08 GMT;SameSite=Lax";
