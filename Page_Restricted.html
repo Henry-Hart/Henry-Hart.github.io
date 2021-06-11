@@ -35,6 +35,10 @@
 	</script>
 	<script>
 		function load() {
+			window.onerror = function(msg, url, linenumber) {
+			alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
+			return true;
+			}
 			var regex = new RegExp( "[\\?&]key=([^&#]*)" );
 			var results = regex.exec( window.location.href );
 			var key = ""
