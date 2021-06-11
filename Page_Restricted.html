@@ -35,15 +35,15 @@
 	</script>
 	<script>
 		function load() {
-			window.onerror = function(msg, url, linenumber) {
-			alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
-			return true;
-			}
+			//window.onerror = function(msg, url, linenumber) {
+			//alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber);
+			//return true;
+			//}
 			var regex = new RegExp( "[\\?&]key=([^&#]*)" );
 			var results = regex.exec( window.location.href );
 			var key = ""
 			if ( results != null ) {
-				key = encodeURIComponent(results[1].replace(/\+/g,  " "));
+				key = results[1].replace(/\+/g,  " ");
 			}
 			if(key) {
 					document.cookie = "key="+key+";expires=Tue, 19 Jan 2038 03:14:08 GMT;SameSite=Lax";
