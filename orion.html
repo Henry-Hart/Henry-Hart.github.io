@@ -28,6 +28,7 @@ var _this = 0;
 var width = 100+2 // for borders
 var height = 100+2 // ^^^
 var speed = 5;
+var thing = 0;
 
 function preload () {
   //this.cameras.main.centerOn(256, 256);
@@ -79,13 +80,20 @@ function create() {
 
   generateTerain();
 
+  this.destroyed = "stone";
+
   this.input.on('pointerdown', pointer => {
     let child = blocks.children.entries[
       Math.ceil((pointer.y+this.cameras.main.scrollY)/32-1)*width +
-      Math.ceil((pointer.x+this.cameras.main.scrollX)/32-1)];
-    if (this.mode) child.setTexture("blank")
-    else child.setTexture("outline")
+      Math.ceil((pointer.x+this.cameras.main.scrollX)/32-1)]
+    if (pointer.buttons === 1) {
+      if (child.texture != "blank") _this.destroyed = child.texture.key;
+      child.setTexture("blank");
+    }
+    else child.setTexture(this.destroyed);
   });
+
+  game.canvas.addEventListener("contextmenu", e => {e.preventDefault()});
 
 }
 
