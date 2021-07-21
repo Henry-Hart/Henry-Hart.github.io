@@ -1,0 +1,317 @@
+
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js">
+</script>
+<script>
+var config = {
+    width: 512,
+    height: 512,
+    type: Phaser.WEBGL,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            useTree: false
+            //gravity: { y: 100 }
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    },
+    backgroundColor: '#DDDDFF'
+};
+var blocks = 0;
+var game = new Phaser.Game(config);
+var _this = 0;
+var width = 100+2 // for borders
+var height = 100+2 // ^^^
+var speed = 5;
+
+function preload () {
+  //this.cameras.main.centerOn(256, 256);
+  this.cameras.main.setBounds(32, 32, (width-2)*32, (height-2)*32);
+  this.physics.world.setBounds(32, 32, (width-2)*32, (height-2)*32);
+
+  this.load.image("stone","https://raw.githubusercontent.com/Henry-Hart/game/main/stone.png");
+  this.load.image("coal","https://raw.githubusercontent.com/Henry-Hart/game/main/coal-ore.png");
+  this.load.image("dirt","https://raw.githubusercontent.com/Henry-Hart/game/main/dirt.png");
+  this.load.image("grass","https://raw.githubusercontent.com/Henry-Hart/game/main/grass.png");
+  this.load.image("player","https://raw.githubusercontent.com/Henry-Hart/game/main/player.png");
+
+}
+
+function create() {
+
+  _this = this;
+
+
+  this.cursors = this.input.keyboard.createCursorKeys();
+  /*const controlConfig = {
+      camera: this.cameras.main,
+      left: cursors.left,
+      right: cursors.right,
+      up: cursors.up,
+      down: cursors.down,
+      zoomIn: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
+      zoomOut: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.E),
+      acceleration: 0.06,
+      drag: 0.0005,
+      maxSpeed: 1.0
+  };
+  this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl(controlConfig);
+  */
+  this.player = this.physics.add.image(32, 32, 'player').setOrigin(0);
+
+  this.player.setCollideWorldBounds(true);
+
+  this.cameras.main.startFollow(this.player, true, 1, 1);
+
+  // speed
+  this.player.xi = 0;
+  this.player.yi = 0;
+  this.player.jumped = false;
+
+  // mode
+  this.mode = true;
+  this.space = false;
+
+  generateTerain();
+
+  this.input.on('pointerdown', pointer => {
+    let child = blocks.children.entries[
+      Math.ceil((pointer.y+this.cameras.main.scrollY)/32-1)*width +
+      Math.ceil((pointer.x+this.cameras.main.scrollX)/32-1)];
+    if (this.mode) child.setTexture("blank")
+    else child.setTexture("outline")
+  });
+
+}
+
+function generateTerain() {
+  var draw = _this.make.graphics({x: 0, y: 0, add: false});
+  draw.generateTexture("blank", 32, 32);
+  draw.fillStyle(0xFF0000, 1.0);
+  draw.fillRect(0, 0, 32, 32);
+  draw.generateTexture("outline", 32, 32);
+  blocks = _this.add.group({ key: "blank", repeat: width*height-1, setScale: { x: 1, y: 1 } });
+  Phaser.Actions.GridAlign(blocks.getChildren(), { // align them
+    width: width,
+    cellWidth: 32,
+    cellHeight: 32,
+    x: 0,
+    y: 0
+  });
+  blocks.children.iterate( e => {
+    e.id = e.getIndexList()[0]
+    e.setOrigin(0);
+  });
+  var top = [];
+  var block = Phaser.Math.Between(0, 4);
+  var blockcount = 0;
+  var totalblocks = 0;
+  while(totalblocks < width) {
+    switch(block) {
+      case 0:
+        blockcount = Phaser.Math.Between(4, 6);
+        break;
+      case 1:
+        blockcount = Phaser.Math.Between(5, 7);
+        break;
+      case 2:
+        blockcount = Phaser.Math.Between(4, 6);
+        break;
+      case 3:
+        blockcount = Phaser.Math.Between(2, 5);
+        break;
+      case 4:
+        blockcount = Phaser.Math.Between(1, 4);
+        break;
+    }
+    for(let i = 0; i < blockcount; i++) {
+      top.push(block)
+      totalblocks++;
+    }
+    if(block == 0) block = 1
+    else if(block == 4) block = 3
+    else block += 2 * Phaser.Math.Between(0, 1) - 1;
+  }
+
+  top.splice(width,top.length-width)
+
+  blocks.children.iterate( e => {
+    let xpos = (e.id -1) % width;
+    let ypos = Math.ceil(e.id / width);
+    if (xpos === 0 || ypos === 1 || xpos === width-1 || ypos === width) {
+      e.setTexture("outline")
+    }
+    //else if (xpos === 1 || ypos === width-1 || ypos === width-2) {}
+    else {
+      let level = -top[xpos]+10;
+      if (level === ypos) {
+        e.setTexture("grass");
+      }
+      else if (ypos > 13) {
+        if (Phaser.Math.Between(1, 20) === 20) {
+          e.setTexture("coal");
+        }
+        else {
+          e.setTexture("stone");
+        }
+      }
+      else if (level < ypos) {
+        e.setTexture("dirt");
+      }
+    }
+  });
+}
+
+function moveplayer(context) {
+  //this.controls.update(delta);
+
+  //this.player.setVelocity(0);
+
+  //this.player.px = this.player.x
+  //this.player.py = this.player.y
+
+
+  if (context.cursors.left.isDown) {
+    context.player.xi -= speed;
+    context.player.flipX = true;
+  }
+  else if (context.cursors.right.isDown) {
+    context.player.xi += speed;
+    context.player.flipX = false;
+  }
+  if (context.cursors.up.isDown && !context.player.jumped) {
+    context.player.yi += speed*2;
+    context.player.jumped = true;
+  }
+  context.player.yi -= 1;
+  //else if (context.cursors.down.isDown) context.player.yi -= 5;
+
+
+  if (context.player.xi < 0)
+  {
+    let point = Math.ceil(context.player.y/32+1)*width + Math.ceil(context.player.x/32);
+    let condition = false;
+    // find condition
+    if (context.player.y%32 === 0) {
+      condition = blocks.children.entries[point-1].texture.key === "blank" &&
+      blocks.children.entries[point-width-1].texture.key === "blank"
+    }
+    else {
+      condition = blocks.children.entries[point-1].texture.key === "blank" &&
+      blocks.children.entries[point-width-1].texture.key === "blank" &&
+      blocks.children.entries[point-2*width-1].texture.key === "blank"
+    }
+    // check
+    if (condition) {
+      context.player.x += context.player.xi;
+    }
+    else if (Math.ceil(context.player.x/32) === Math.ceil((context.player.x-context.player.xi)/32)) {
+      context.player.x += context.player.xi;
+    }
+    else {
+      context.player.x = Math.ceil(context.player.x/32)*32
+    }
+  }
+  else if (context.player.xi > 0)
+  {
+    let point = Math.ceil(context.player.y/32+1)*width + Math.ceil(context.player.x/32);
+    let condition = false;
+    // find condition
+    if (context.player.y%32 === 0) {
+      condition = blocks.children.entries[point+1].texture.key === "blank" &&
+      blocks.children.entries[point-width+1].texture.key === "blank"
+    }
+    else {
+      condition = blocks.children.entries[point+1].texture.key === "blank" &&
+      blocks.children.entries[point-width+1].texture.key === "blank" &&
+      blocks.children.entries[point-2*width+1].texture.key === "blank"
+    }
+    // check
+    if (condition) {
+      context.player.x += context.player.xi;
+    }
+    else if (Math.ceil(context.player.x/32) === Math.ceil((context.player.x+context.player.xi)/32)) {
+      context.player.x += context.player.xi;
+    }
+    else {
+      context.player.x = Math.ceil(context.player.x/32)*32
+    }
+  }
+
+  if (context.player.yi > 0)
+  {
+    let point = Math.ceil(context.player.y/32-1)*width + Math.ceil(context.player.x/32);
+    // find condition
+    let condition = false;
+    if (context.player.x%32 === 0) {
+      condition = blocks.children.entries[point].texture.key === "blank"
+    }
+    else {
+      condition = blocks.children.entries[point].texture.key === "blank" &&
+      blocks.children.entries[point-1].texture.key === "blank"
+    }
+    // check
+    if (condition) {
+      context.player.y -= context.player.yi;
+    }
+    else if (Math.ceil(context.player.y/32) === Math.ceil((context.player.y+context.player.yi)/32)) {
+      context.player.y -= context.player.yi;
+    }
+    else {
+      context.player.y = Math.ceil(context.player.y/32)*32;
+      context.player.yi = 0;
+    }
+  }
+  else if (context.player.yi < 0)
+  {
+    let point = Math.ceil(context.player.y/32+2)*width + Math.ceil(context.player.x/32);
+    // find condition
+    let condition = false;
+    if (context.player.x%32 === 0) {
+      condition = blocks.children.entries[point].texture.key === "blank"
+    }
+    else {
+      condition = blocks.children.entries[point].texture.key === "blank" &&
+      blocks.children.entries[point-1].texture.key === "blank"
+    }
+    // check
+    if (condition) {
+      context.player.y -= context.player.yi;
+    }
+    else if (Math.ceil(context.player.y/32) === Math.ceil((context.player.y-context.player.yi)/32)) {
+      context.player.y -= context.player.yi;
+    }
+    else {
+      context.player.y = Math.ceil(context.player.y/32)*32;
+      context.player.yi = 0;
+      context.player.jumped = false;
+    }
+  }
+
+  context.player.xi = 0;
+
+  //blocks.children.entries[205].setTexture("outline")
+  //Math.ceil(this.player.y/32+1)*width + Math.ceil(this.player.x/32)+1
+  //this.player.x = 0;
+}
+
+function update (time, delta) {
+  // move player
+  moveplayer(this);
+  // check for space
+  if (this.cursors.space.isDown && !this.space) {
+    this.mode = !this.mode;
+    this.space = true;
+  }
+  else this.space = false;
+}
+</script>
+</head>
+<body>
+</body>
+</html>
