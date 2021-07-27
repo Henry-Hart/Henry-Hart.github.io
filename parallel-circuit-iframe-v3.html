@@ -1,5 +1,5 @@
 <html><head>
-<meta http-equiv="content-type" content="text/html; charset=windows-1252"><script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script><style>@media print {#ghostery-tracker-tally {display:none !important}}</style>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252"><script src="parallel-circuit-iframe-v3_files/phaser-arcade-physics.js"></script><style>@media print {#ghostery-tracker-tally {display:none !important}}</style>
 <script>
 function preload() {
 }
@@ -1022,13 +1022,9 @@ function updatePowerMeter() {
 
 	let powerMeterDisplay;
 
-	if (_g.bulbMeasuringPowerFor === 1) {
-		powerMeterDisplay = displayTo1dp(_g.physPower1);
-	} else if (_g.bulbMeasuringPowerFor === 2) {
-		powerMeterDisplay = displayTo1dp(_g.physPower2);
-	} else {
+	Number(_g.bulbMeasuringPowerFor) ?
+		powerMeterDisplay = displayTo1dp(_g["physPower"+_g.bulbMeasuringPowerFor]) :
 		powerMeterDisplay = '-.-';
-	}
 
 	_g.powerMeterOutput.setText(powerMeterDisplay);
 
@@ -1036,32 +1032,27 @@ function updatePowerMeter() {
 
 function getBulbIDForPower() {
 
-	let found = false;
-
 	let probex = _g.draggedObject.x;
 	let probey = _g.draggedObject.y;
-
-	let bulb;
 
 	//for numbering of zones and abbreviations see https://docs.google.com/presentation/d/1iP_TTmhVB4uu238Fdf6szaIlPHxZ-5snqz01gnPP5Do/edit?usp=sharing
 	//	_g.bulb1Topy = _g.b1ty - _g.blr;
 	//  _g.bulb2Topy = _g.biy - _g.blr;
 	if (pointIsInBox(probex, probey, _g.blrlx, _g.bulb1Topy, _g.blrrx, _g.b1ty)) {
 
-		found = true;
-		bulb = 1;
+		return 1;
 
-	} else if (pointIsInBox(probex, probey, _g.blrlx, _g.bulb2Topy, _g.blrrx, _g.biy)) {
+	} else if (pointIsInBox(probex, probey, _g.blrlxo, _g.bulb2Topy, _g.blrrxo, _g.biy+1)) {  //check zone C3
 
-		found = true;
-		bulb = 2;
+		return 2;
 
-	} else {
-		found = false;
-		bulb = -1
+	} else if (pointIsInBox(probex, probey, _g.lampspace, _g.bulb2Topy, _g.blrlxo2, _g.biy+1)) {  //check zone C3
+
+		return 3;
+
 	}
 
-	return bulb;
+	return "-.-";
 
 }
 
@@ -1104,11 +1095,13 @@ function getProbeVoltage(source, probe) {
 		found = true;
 		zone = 2;
 		_g.measuredVoltageProportion = 1;
-	} else if (pointIsInBox(probex, probey, _g.lix, _g.biy, _g.blrlx, _g.boy)) {	//check zone 3
+	} else if (pointIsInBox(probex, probey, _g.lix, _g.biy, _g.blrlxo, _g.boy)) {	//check zone 3
 		found = true;
 		zone = 3;
 		_g.measuredVoltageProportion = 1;
-	} else if (pointIsInBox(probex, probey, _g.blrlx, _g.biy, _g.bsrlx, _g.boy)) {	//check zone 4
+
+
+	} else if (pointIsInBox(probex, probey, _g.blrlxo, _g.biy, _g.bsrlxo, _g.boy)) {	//check zone 4
 		found = true;
 		zone = 4;
 
@@ -1116,15 +1109,16 @@ function getProbeVoltage(source, probe) {
 		let startY = _g.boy - _g.ww/2;//start half a wire thickness from the bottom
 
 		if (probey < startY) {//only reduce potential above midline
-			_g.measuredVoltageProportion = 1 - ((startY - probey)/bulbPdLength);
+			_g.measuredVoltageProportion = 1 - ((startY - probey)/bulbPdLength) *
+			_g.physBulb2Resistance/_g.totalBulbResistance;
 		} else {
 			_g.measuredVoltageProportion = 1;
 		}
 
-	} else if (pointIsInBox(probex, probey, _g.blrlx, _g.bulb2Topy, _g.blrrx, _g.biy)) {	//check zone 5 - bottom bulb
+	} else if (pointIsInBox(probex, probey, _g.blrlxo, _g.bulb2Topy, _g.blrrxo, _g.biy)) {	//check zone 5 - bottom bulb
 
 		//you know it's in the bulb rectangle boundary, but is it between the inner and the outer radius?
-		let base = probex - _g.mpx;
+		let base = probex - _g.mpxo;
 		let height = _g.biy - probey;
 
 		let distanceFromCentre = Math.sqrt( Math.pow(base, 2) + Math.pow(height, 2) );
@@ -1138,23 +1132,96 @@ function getProbeVoltage(source, probe) {
 			let pointerAngleRadians = Math.acos(base/distanceFromCentre);
 
 			let distanceFromCurveStart = (Math.PI - pointerAngleRadians) * _g.mr;
-			_g.measuredVoltageProportion = 1 - ((_g.ww/2 + distanceFromCurveStart)/bulbPdLength);
+			_g.measuredVoltageProportion = 1 - ((_g.ww/2 + distanceFromCurveStart)/bulbPdLength) *
+			_g.physBulb2Resistance/_g.totalBulbResistance;
 		}
 
-	} else if (pointIsInBox(probex, probey, _g.bsrrx, _g.biy, _g.blrrx, _g.boy)) {	//check zone 6
+	} else if (pointIsInBox(probex, probey, _g.blrrxo-_g.ww, _g.biy, _g.blrrxo, _g.boy)) {	//check zone 6
 		found = true;
 		zone = 6;
 
 		//As you go up from the top of the wire downwards towards the middle, the potential drops
-		let startY = _g.biy;
+		let startY = _g.boy;
 
 		if (probey < _g.boy - _g.ww/2) {//only reduce potential above midline
-			_g.measuredVoltageProportion = 1 - ((_g.ww/2 + distanceRoundBulb + (probey - startY))/bulbPdLength);
+			_g.measuredVoltageProportion = 1 - ((_g.ww/2 + (probey - startY))/bulbPdLength);
+		} else {
+			_g.measuredVoltageProportion = 1;
+		}
+		_g.measuredVoltageProportion *= _g.physBulb3Resistance/_g.totalBulbResistance
+
+	}
+
+
+
+
+
+
+
+
+	if (pointIsInBox(probex, probey, _g.blrrxo, _g.biy, _g.bsrlxo2-_g.ww, _g.boy)) {	//check zone C4
+			_g.measuredVoltageProportion = _g.physBulb3Resistance/_g.totalBulbResistance;
+			found = true;
+			//alert(1)
+	}	else if (pointIsInBox(probex, probey, _g.bsrlxo2-_g.ww, _g.biy, _g.bsrlxo2, _g.boy)) {	//check zone 6
+			found = true;
+
+			//As you go up from the middle of the wire upwards towards the beginning of the curve, the potential drops
+			let startY = _g.boy - _g.ww/2;//start half a wire thickness from the bottom
+
+			if (probey < startY) {//only reduce potential above midline
+				_g.measuredVoltageProportion = 1 - ((startY - probey)/bulbPdLength);
+			} else {
+				_g.measuredVoltageProportion = 1;
+			}
+			_g.measuredVoltageProportion *= _g.physBulb3Resistance/_g.totalBulbResistance;
+
+	} if (pointIsInBox(probex, probey, _g.lampspace, _g.bulb2Topy, _g.blrlxo2, _g.biy+1)) {  //check zone C3
+
+		//you know it's in the bulb rectangle boundary, but is it between the inner and the outer radius?
+		let base = probex - _g.centero;
+		let height = _g.biy - probey;
+
+		let distanceFromCentre = Math.sqrt( Math.pow(base, 2) + Math.pow(height, 2) );
+
+		if (distanceFromCentre > _g.bsr && distanceFromCentre < _g.blr) {
+			found = true;
+			zone = 5;
+
+			//get the angle of the pointer with the centre of the curve - use cos to get the full angle range from Pi to -Pi
+			//subtract this from Pi so the distance from the start begins at 0, not Pi
+			let pointerAngleRadians = Math.acos(base/distanceFromCentre);
+
+			let distanceFromCurveStart = (Math.PI - pointerAngleRadians) * _g.mr;
+			_g.measuredVoltageProportion = (1 - ((_g.ww/2 + distanceFromCurveStart)/bulbPdLength)) *
+			_g.physBulb3Resistance/_g.totalBulbResistance;
+		}
+
+	} else if (pointIsInBox(probex, probey, _g.blrlxo2-_g.ww, _g.biy, _g.blrlxo2, _g.boy)) {	//check zone 6
+		found = true;
+		zone = 6;
+
+		//As you go up from the top of the wire downwards towards the middle, the potential drops
+		let startY = _g.boy;
+
+		if (probey < _g.boy - _g.ww/2) {//only reduce potential above midline
+			_g.measuredVoltageProportion = - ((_g.ww/2 + (probey - startY))/bulbPdLength);
 		} else {
 			_g.measuredVoltageProportion = 0;
 		}
+		_g.measuredVoltageProportion *= _g.physBulb3Resistance/_g.totalBulbResistance;
 
-	} else if (pointIsInBox(probex, probey, _g.blrrx, _g.biy, _g.rox, _g.boy)) {	//check zone 7
+	}
+
+
+
+
+
+
+
+
+
+	else if (pointIsInBox(probex, probey, _g.blrlxo2 - _g.ww, _g.biy, _g.rox, _g.boy)) {	//check zone 7
 		found = true;
 		zone = 7;
 		_g.measuredVoltageProportion = 0;
@@ -1216,11 +1283,25 @@ function getProbeVoltage(source, probe) {
 			_g.measuredVoltageProportion = 0;
 		}
 
+
+
+		///////////////////////////////////////////////////////////////////////////
+
+		//.......................................................................//
+
+		///////////////////////////////////////////////////////////////////////////
+
+
+		//_g.blrlxo2 - _g.ww, _g.biy, _g.rox, _g.boy
+
 	} else if (pointIsInBox(probex, probey, _g.blrrx, _g.b1ty, _g.rix, _g.b1by)) {	//check zone 14
 		found = true;
 		zone = 14;
 		_g.measuredVoltageProportion = 0;
 	}
+
+
+
 
 	if(found) {
 		return _g.measuredVoltageProportion;
@@ -1348,7 +1429,7 @@ function getAmmeterCurrent() {
 	} else if (pointIsInBox(probex, probey, _g.lox, _g.mpy, _g.lix, _g.boy)) {	//check zone C1
 		found = true;
 		zone = 'C1';
-	} else if (pointIsInBox(probex, probey, _g.lix, _g.biy, _g.bsrlxo, _g.boy)) {	//check zone C2
+	} else if (pointIsInBox(probex, probey, _g.lox, _g.biy, _g.bsrlxo, _g.boy)) {	//check zone C2
 		found = true;
 		zone = 'C2';
 
@@ -1368,7 +1449,7 @@ function getAmmeterCurrent() {
 
 
 
-	} else if (pointIsInBox(probex, probey, _g.blrlxo, _g.bulb2Topy, _g.blrrxo, _g.biy)) {  //check zone C3
+	} else if (pointIsInBox(probex, probey, _g.blrlxo, _g.bulb2Topy, _g.blrrxo, _g.biy+1)) {  //check zone C3
 
 		//you know it's in the bulb rectangle boundary, but is it between the inner and the outer radius?
 		let base = probex - _g.mpxo;
@@ -1380,17 +1461,17 @@ function getAmmeterCurrent() {
 			found = true;
 			zone = 'C3';
 		}
-		// change to else if when I get the boxes optimized
-	} if (pointIsInBox(probex, probey, _g.blrrxo-_g.bsr, _g.biy, _g.bsrlxo2, _g.boy)) {	//check zone C4
+		// change when I get the boxes optimized
+} else if (pointIsInBox(probex, probey, _g.blrrxo-_g.bsr+1, _g.biy, _g.bsrlxo2, _g.boy)) {	//check zone C4
 		found = true;
 		zone = 'C4';
-	var diff = (_g.lampspace-_g.blrrxo);
-} if (pointIsInBox(probex, probey, _g.blrlxo+diff, _g.bulb2Topy, _g.blrrxo+diff, _g.biy)) {  //check zone C3
+		var diff = _g.lampspace-_g.blrrxo-1;
+} if (pointIsInBox(probex, probey, _g.lampspace, _g.bulb2Topy, _g.blrlxo2, _g.biy+1)) {  //check zone C3
 
 		//you know it's in the bulb rectangle boundary, but is it between the inner and the outer radius?
 		let base = probex - _g.centero;
 		let height = _g.biy - probey;
-		alert(1)
+		//alert(1)
 		let distanceFromCentre = Math.sqrt( Math.pow(base, 2) + Math.pow(height, 2) );
 
 		if (distanceFromCentre > _g.bsr && distanceFromCentre < _g.blr) {
@@ -1398,9 +1479,12 @@ function getAmmeterCurrent() {
 			zone = 'C5';
 		}
 
+	} else if (pointIsInBox(probex, probey, _g.blrlxo2 - _g.ww, _g.biy, _g.rox, _g.boy)) {	//check zone C5
+		found = true;
+		zone = 'C7';
 	} else if (pointIsInBox(probex, probey, _g.rix, _g.mpy, _g.rox, _g.biy)) {	//check zone C5
 		found = true;
-		zone = 'C6';
+		zone = 'C8';
 	}
 
 	let zoneToReturn;
@@ -2762,6 +2846,7 @@ function createCircuitOutline(context) {
 
 	_g.blrlx = blrlx;
 	_g.blrlxo = blrlxo;
+	_g.blrlxo2 = bsrrxo2 + ww;
 	_g.bsrlx = bsrlx;
 	_g.bsrlxo = bsrlxo;
 	_g.bsrlxo2 = bsrlxo2;
