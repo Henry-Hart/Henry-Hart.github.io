@@ -1,0 +1,230 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+    <script>
+
+    var config = {
+        width: 800,
+        height: 600,
+        type: Phaser.WEBGL,
+        scene: {
+            create: create
+        },
+        backgroundColor: '#EEEECC'
+    };
+
+    new Phaser.Game(config);
+
+
+    function getTextures(_this) {
+      // graphics for textures
+      var graphics = _this.make.graphics({x: 0, y: 0, add: false});
+
+      // button texture
+      graphics.fillStyle(0x555555, 1.0);
+      graphics.fillRoundedRect(0, 0, 100, 50, 16);
+      graphics.generateTexture('button', 100, 100);
+      graphics.clear(); // clear graphics for new texture
+
+      // nucleus-decayed texure
+      graphics.lineStyle(2, 0x000000, 1.0);
+      graphics.strokeCircle(50, 50, 5);
+      graphics.fillStyle(0xFFFF00, 1.0);
+      graphics.fillCircle(50, 50, 5);
+      graphics.fillStyle(0xFFFFFF, 1.0);
+      graphics.fillCircle(49, 49, 2);
+      graphics.generateTexture('nucleus-decayed', 100, 100);
+      graphics.clear(); // clear graphics for new texture
+
+      // nucleus-waiting texture
+      graphics.fillStyle(0xFF0000, 0.02);
+      for(let i = 1; i < 50; i++) {
+          graphics.fillCircle(50, 50, 20-i/2.5);
+      }
+      graphics.lineStyle(2, 0x000000, 1.0);
+      graphics.strokeCircle(50, 50, 5);
+      graphics.fillStyle(0x00FFFF, 1.0);
+      graphics.fillCircle(50, 50, 5);
+      graphics.fillStyle(0xFFFFFF, 1.0);
+      graphics.fillCircle(49, 49, 2);
+      graphics.generateTexture('nucleus-waiting', 100, 100);
+      graphics.clear(); // clear graphics for new texture
+
+      // particle texture
+      graphics.fillStyle(0x444444, 1.0);
+      graphics.fillCircle(50, 50, 3);
+      graphics.generateTexture('particle', 100, 100);
+      graphics.clear(); // clear graphics for new texture
+
+      // graph texture
+      graphics.fillStyle(0xEEEEEE, 1.0);
+      graphics.fillRoundedRect(0, 0, 252, 252, 10);
+      graphics.fillStyle(0xFFFFFF, 1.0);
+      graphics.fillRoundedRect(1, 1, 250, 250, 10);
+      // axis
+      graphics.lineStyle(2, 0x000000, 1.0);
+      graphics.strokeRect(26, 11, 215, 215);
+      graphics.lineStyle(2, 0xFFFFFF, 1.0);
+      graphics.strokeRect(28, 11, 213, 213);
+      // arrowheads
+      graphics.lineStyle(2, 0x000000, 1.0);
+      graphics.beginPath();
+      // y
+      graphics.moveTo(21, 16);
+      graphics.lineTo(26, 11);
+      graphics.moveTo(26, 11);
+      graphics.lineTo(31, 16);
+      // x
+      graphics.moveTo(236, 221);
+      graphics.lineTo(241, 226);
+      graphics.moveTo(241, 226);
+      graphics.lineTo(236, 231);
+      graphics.closePath();
+      graphics.strokePath();
+      graphics.generateTexture('graph', 300, 300);
+    }
+
+    function init(_this, userinput, font) {
+      //
+      // add a group of clones
+      var blocks = _this.add.group({ key: 'nucleus-waiting', repeat: 99, setScale: { x: 1, y: 1 } });
+      var ret = [blocks];
+      Phaser.Actions.GridAlign(blocks.getChildren(), { // align them
+          width: 10,
+          cellWidth: 25,
+          cellHeight: 25,
+          x: 100,
+          y: 100
+      });
+      // add a particle with the particle texture
+      particles = _this.add.particles('particle');
+      particles.createEmitter({
+          angle: { min: -180, max: 180 },
+          speed: 100,
+          quantity: 1,
+          lifespan: 2000,
+          on: false
+      });
+      ret[0].destroy = () => {
+        let l = blocks.children.entries.length;
+        for(let i = 0; i < l; i++) blocks.children.entries[0].destroy();
+      }
+      //
+      // some of these won't usually change
+      var e; // holder for probability constraints
+      var prob = (e=userinput.split("/"))[0]/e[1]; // probability
+      var gridsize = 200; // grid size
+      var timelim = 20; // end of time on graph
+      var scale = gridsize / timelim;
+      var gridr = gridsize * 100 / blocks.children.entries.length;
+      var tps = 100; // ticks per second
+      var k = 1 / tps; // tps specific time constant
+      var csub = 1 - prob; // would have precision issues
+      //window.csub = Math.exp(-prob/tps); // calculated subdivisions
+      var between = 1 - csub ** k; // upper value for Math.Between
+      var timep = gridsize / timelim * k // pixel jump
+      ret.push(_this.add.text(530, 140, 'y=('+(e[1]-e[0])+'/'+e[1]+')', font));
+      var offset = ret[1].displayWidth;
+      ret.push(_this.add.text(530+offset, 135, 'x', font));
+      // initialise graph vars
+      var graphics = _this.add.graphics();
+      ret.push(graphics);
+      graphics.lineStyle(2, 0x0000FF, 1.0);
+      var time = 0;
+      var prex = 450;
+      var prey = 150;
+      var decay = 0;
+      // draw predicted graph
+      while(time < gridsize) {
+        graphics.beginPath();
+        graphics.moveTo(prex, prey);
+        graphics.lineTo((prex=450+(time++)), Math.round(prey=350-csub**(time/scale)*gridr));
+        graphics.closePath();
+        graphics.strokePath();
+      }
+      // reset
+      graphics.lineStyle(2, 0xFF0000, 1.0);
+      time = 0;
+      prex = 450;
+      prey = 150;
+      decay = 0;
+      // make decay event timer
+      ret.push(_this.time.addEvent({
+          delay: k * 1000, // in milliseconds
+          callback: () => {
+              // iterate on the nuclei
+              blocks.children.iterate(element => {
+                  if(!element.decayed && Math.random() <= between) {
+                      element.setTexture('nucleus-decayed');
+                      particles.emitParticleAt(element.x, element.y);
+                      element.decayed = true;
+                      decay++;
+                      }
+                  },
+              this
+              );
+              //alert(decay);
+              // draw on the graph
+              if(time < gridsize) {
+                graphics.beginPath();
+                graphics.moveTo(prex, prey);
+                graphics.lineTo((prex=450+(time+=timep)), Math.round(prey=150+decay*2));
+                graphics.closePath();
+                graphics.strokePath();
+              }
+          },
+          loop: true
+      }));
+      //*/
+
+      return ret;
+    }
+
+
+    function create() {
+        // get textures
+        getTextures(this);
+        // graph
+        this.add.image(574, 274,'graph');
+        var font = { fontFamily: "Calibri", fontSize: 11, color: "#777777" }
+        this.add.text(435, 355, '0', font);
+        this.add.text(530, 355, 'Time (s)', font);
+        this.add.text(642, 355, '20', font);
+        this.add.text(433, 275, '% Decayed', font).rotation=3*Math.PI/2; // radians
+        this.add.text(428, 145, '100', font);
+        // button
+        var bg = this.add.image(250, 475, 'button').setInteractive();
+        this.add.text(214, 428, 'Step',  { fontFamily: "Calibri", fontSize: 40, color: "#AAAAAA" });
+        /*/ add an onclick event
+        bg.on("pointerdown", () => {
+            // do stuff
+            blocks.children.iterate(element => {
+                if(!element.decayed && Phaser.Math.Between(1, 4) == 1) {
+                    element.setTexture('nucleus-decayed');
+                    particles.emitParticleAt(element.x, element.y);
+                    element.decayed = true;
+                    }
+                },
+            this
+          )
+        });
+        //*/
+        var bg2 = this.add.image(550, 475, 'button').setInteractive();
+        this.add.text(506, 428, 'Reset',  { fontFamily: "Calibri", fontSize: 40, color: "#AAAAAA" });
+        var _this = this;
+        bg2.on("pointerdown", () => {
+          destroy();
+          restart();
+        });
+
+        var restart = () => e = init(this, "7/40", font);
+        restart();
+        var destroy = () => e.map(e => e.destroy());
+    }
+
+    </script>
+  </head>
+  <body>
+  </body>
+</html>
