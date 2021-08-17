@@ -2,6 +2,7 @@
   <head>
     <meta charset="utf-8">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+
     <script>
 
     var config = {
@@ -85,7 +86,7 @@
       graphics.generateTexture('graph', 300, 300);
     }
 
-    function init(_this, userinput, font) {
+    function init(_this, userinput, font, go, tps) {
       //
       // add a group of clones
       var blocks = _this.add.group({ key: 'nucleus-waiting', repeat: 99, setScale: { x: 1, y: 1 } });
@@ -113,20 +114,23 @@
       //
       // some of these won't usually change
       var e; // holder for probability constraints
-      var prob = (e=userinput.split("/"))[0]/e[1]; // probability
+      var prob = //(e=userinput.split("/"))[0]/e[1]; // probability
+        1 - userinput // changed nice display
       var gridsize = 200; // grid size
       var timelim = 20; // end of time on graph
       var scale = gridsize / timelim;
       var gridr = gridsize * 100 / blocks.children.entries.length;
-      var tps = 100; // ticks per second
       var k = 1 / tps; // tps specific time constant
       var csub = 1 - prob; // would have precision issues
       //window.csub = Math.exp(-prob/tps); // calculated subdivisions
       var between = 1 - csub ** k; // upper value for Math.Between
       var timep = gridsize / timelim * k // pixel jump
-      ret.push(_this.add.text(530, 140, 'y=('+(e[1]-e[0])+'/'+e[1]+')', font));
+      //ret.push(_this.add.text(530, 140, 'y=('+(e[1]-e[0])+'/'+e[1]+')', font));
+       // changed nice display
+      ret.push(_this.add.text(0, 140, 'y='+userinput, font))
+      ret[1].x = 550-ret[1].displayWidth/2;
       var offset = ret[1].displayWidth;
-      ret.push(_this.add.text(530+offset, 135, 'x', font));
+      ret.push(_this.add.text(ret[1].x+offset, 135, 'x', font));
       // initialise graph vars
       var graphics = _this.add.graphics();
       ret.push(graphics);
@@ -149,38 +153,62 @@
       prex = 450;
       prey = 150;
       decay = 0;
+
+      // tick
+      var tick = () => {
+        blocks.children.iterate(element => {
+            if(!element.decayed && Math.random() <= between) {
+                element.setTexture('nucleus-decayed');
+                particles.emitParticleAt(element.x, element.y);
+                element.decayed = true;
+                decay++;
+                }
+            },
+        this
+        );
+        //alert(decay);
+        // draw on the graph
+        if(time < gridsize) {
+          graphics.beginPath();
+          graphics.moveTo(prex, prey);
+          graphics.lineTo((prex=450+(time+=timep)), Math.round(prey=150+decay*2));
+          graphics.closePath();
+          graphics.strokePath();
+        }
+      }
+
       // make decay event timer
       ret.push(_this.time.addEvent({
           delay: k * 1000, // in milliseconds
           callback: () => {
               // iterate on the nuclei
-              blocks.children.iterate(element => {
-                  if(!element.decayed && Math.random() <= between) {
-                      element.setTexture('nucleus-decayed');
-                      particles.emitParticleAt(element.x, element.y);
-                      element.decayed = true;
-                      decay++;
-                      }
-                  },
-              this
-              );
-              //alert(decay);
-              // draw on the graph
-              if(time < gridsize) {
-                graphics.beginPath();
-                graphics.moveTo(prex, prey);
-                graphics.lineTo((prex=450+(time+=timep)), Math.round(prey=150+decay*2));
-                graphics.closePath();
-                graphics.strokePath();
-              }
+              if(go()) tick();
           },
           loop: true
       }));
       //*/
 
-      return ret;
+      return [ret, tick];
     }
 
+    function makeButtons(context) {
+      // button
+      var buttons = [context.add.image(250, 475, 'button').setInteractive()];
+      var txtlen = [context.add.text(214, 428, 'Step',  { fontFamily: "Calibri", fontSize: 40, color: "#AAAAAA" })];
+      buttons.push(context.add.image(550, 475, 'button').setInteractive());
+      txtlen.push(context.add.text(506, 428, 'Reset',  { fontFamily: "Calibri", fontSize: 40, color: "#AAAAAA" }));
+      buttons.push(context.add.image(250, 530, 'button').setInteractive());
+      txtlen.push(context.add.text(225, 485, 'Mode',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      buttons.push(context.add.image(550, 530, 'button').setInteractive());
+      txtlen.push(context.add.text(520, 485, 'Half life',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      txtlen.push(context.add.text(0, 505, '',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      buttons.push(context.add.image(400, 475, 'button').setInteractive());
+      txtlen.push(context.add.text(360, 428, 'Start',  { fontFamily: "Calibri", fontSize: 40, color: "#AAAAAA" }));
+      buttons.push(context.add.image(400, 530, 'button').setInteractive());
+      txtlen.push(context.add.text(385, 485, 'TPS',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      txtlen.push(context.add.text(0, 505, '',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      return [buttons, txtlen];
+    }
 
     function create() {
         // get textures
@@ -193,33 +221,117 @@
         this.add.text(642, 355, '20', font);
         this.add.text(433, 275, '% Decayed', font).rotation=3*Math.PI/2; // radians
         this.add.text(428, 145, '100', font);
-        // button
-        var bg = this.add.image(250, 475, 'button').setInteractive();
-        this.add.text(214, 428, 'Step',  { fontFamily: "Calibri", fontSize: 40, color: "#AAAAAA" });
-        /*/ add an onclick event
-        bg.on("pointerdown", () => {
-            // do stuff
-            blocks.children.iterate(element => {
-                if(!element.decayed && Phaser.Math.Between(1, 4) == 1) {
-                    element.setTexture('nucleus-decayed');
-                    particles.emitParticleAt(element.x, element.y);
-                    element.decayed = true;
-                    }
-                },
-            this
-          )
-        });
-        //*/
-        var bg2 = this.add.image(550, 475, 'button').setInteractive();
-        this.add.text(506, 428, 'Reset',  { fontFamily: "Calibri", fontSize: 40, color: "#AAAAAA" });
-        var _this = this;
-        bg2.on("pointerdown", () => {
-          destroy();
-          restart();
+
+        var back = makeButtons(this)
+        var buttons = back[0];
+        window.len = back[1];
+
+        // tps
+        var tps = 100;
+        var otps = tps;
+        var settps = val => {
+          tps = val
+          len[7].text = val.toString();
+          len[7].x = 385+(len[6].displayWidth-len[7].displayWidth)/2;
+        }
+        settps(tps);
+
+        // change tps
+        buttons[5].on("pointerdown", () => {
+          var check;
+          if((check = Number(prompt("Change Ticks Per Second..."))) !== NaN) {
+            if(check >= 0.1 && check <= 100) {
+              settps(check);
+              reset(tps);
+            }
+          }
         });
 
-        var restart = () => e = init(this, "7/40", font);
-        restart();
+        // half life
+        var chance = 0.75; // 1 - chance of decay per second
+        var setchance = (shown, val) => {
+          chance = val;
+          len[4].text = shown.toString();
+          len[4].x = 520+(len[3].displayWidth-len[4].displayWidth)/2;
+        }
+        setchance((Math.log(0.5) / Math.log(chance)).toPrecision(5), chance);
+
+        // change chance
+        buttons[3].on("pointerdown", () => {
+          var check;
+          if((original = Number(prompt("Change Half life (s)..."))) !== NaN) {
+            // convert it to 1 - chance of decay per second
+            check = 0.5 ** (1/original)
+            // check the result
+            if(check >= 0 && check <= 1) {
+              setchance(original, check);
+              reset(tps);
+            }
+          }
+        });
+
+
+        window.reset = tps => {destroy(); restart(tps);}
+        // reset
+        buttons[1].on("pointerdown", () => reset(tps));
+
+        // button
+        // add an onclick event
+        buttons[0].on("pointerdown", () => {
+            // do stuff
+            if(modetxt.text === "step") tick();
+            else len[0].tint = "0xAA3333"; // wrong mode
+        }).on("pointerup", () => len[0].tint=undefined); // reset tint
+
+        var modetxt = this.add.text(0, 505, "", { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" });
+
+        // switch mode function
+        var swmode;
+        (swmode = () => {
+          if(modetxt.text === "continuous") {
+            modetxt.text = "step";
+            tps = 1;
+          }
+          else {
+            modetxt.text = "continuous";
+            tps = otps;
+          }
+          modetxt.x = 225+(len[2].displayWidth-modetxt.displayWidth)/2;
+        })();
+
+        // change mode
+        buttons[2].on("pointerdown", () => {
+          // switch mode
+          swmode();
+          // freeze
+          len[5].text = "Start"
+          on=false;
+          // reset particles
+          reset(tps);
+        });
+
+        // on/off
+        var on = false;
+        buttons[4].on("pointerdown", () => {
+          if(modetxt.text === "continuous") {
+            var oldw = len[5].displayWidth;
+            if(len[5].text === "Start") len[5].text = "Stop";
+            else len[5].text = "Start";
+            len[5].x = 360+(oldw-len[5].displayWidth)/2;
+            on=!on;
+          }
+          else len[5].tint = "0xAA3333";  // wrong mode
+        }).on("pointerup", () => len[5].tint=undefined); // reset tint
+        var e;
+        var tick;
+        var go = () => on;
+
+        var restart = tps => {
+          var res = init(this, chance, font, go, tps);
+          e = res[0];
+          tick = res[1];
+        }
+        restart(tps);
         var destroy = () => e.map(e => e.destroy());
     }
 
