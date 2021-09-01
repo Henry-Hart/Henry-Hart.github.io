@@ -86,7 +86,21 @@
       graphics.generateTexture('graph', 300, 300);
     }
 
-    function init(_this, userinput, font, go, tps) {
+    function drawPrediction(time, gridsize, prex, prey, gridr, scale, csub, graphics) {
+      graphics.lineStyle(2, 0xFF00FF, 1.0);
+      while(time < gridsize) {
+        graphics.beginPath();
+        graphics.moveTo(prex, prey);
+        graphics.lineTo((prex=450+(time++)), Math.round(prey=350-csub**(time/scale)*gridr));
+        graphics.closePath();
+        graphics.strokePath();
+      }
+      graphics.setDepth(-1);
+    }
+
+
+    function init(_this, userinput, font, go, tps, showPrediction, line,
+      gridsize, timelim, scale) {
       //
       // add a group of clones
       var blocks = _this.add.group({ key: 'nucleus-waiting', repeat: 99, setScale: { x: 1, y: 1 } });
@@ -116,10 +130,7 @@
       var e; // holder for probability constraints
       var prob = //(e=userinput.split("/"))[0]/e[1]; // probability
         1 - userinput // changed nice display
-      var gridsize = 200; // grid size
-      var timelim = 20; // end of time on graph
-      var scale = gridsize / timelim;
-      var gridr = gridsize * 100 / blocks.children.entries.length;
+      window.gridr = gridsize * 100 / blocks.children.entries.length;
       var k = 1 / tps; // tps specific time constant
       var csub = 1 - prob; // would have precision issues
       //window.csub = Math.exp(-prob/tps); // calculated subdivisions
@@ -133,26 +144,26 @@
       ret.push(_this.add.text(ret[1].x+offset, 135, 'x', font));
       // initialise graph vars
       var graphics = _this.add.graphics();
-      ret.push(graphics);
-      graphics.lineStyle(2, 0x0000FF, 1.0);
+
+
+      // draw predicted graph
+      var g1 = _this.add.graphics();
+      predict = destroy => {
+        if(destroy) g1.clear();
+        else drawPrediction(0, gridsize, 450, 150, gridr, scale, csub, g1);
+      }
+      showPrediction && predict();
+
+
+      // reset
+      graphics.lineStyle(2, 0xFF*16**((2-line)*2), 1.0);
       var time = 0;
       var prex = 450;
+      var oprex = prex;
       var prey = 150;
       var decay = 0;
-      // draw predicted graph
-      while(time < gridsize) {
-        graphics.beginPath();
-        graphics.moveTo(prex, prey);
-        graphics.lineTo((prex=450+(time++)), Math.round(prey=350-csub**(time/scale)*gridr));
-        graphics.closePath();
-        graphics.strokePath();
-      }
-      // reset
-      graphics.lineStyle(2, 0xFF0000, 1.0);
-      time = 0;
-      prex = 450;
-      prey = 150;
-      decay = 0;
+      var lineData = [prey];
+      var fetchLineData = () => lineData;
 
       // tick
       var tick = () => {
@@ -174,6 +185,8 @@
           graphics.lineTo((prex=450+(time+=timep)), Math.round(prey=150+decay*2));
           graphics.closePath();
           graphics.strokePath();
+          Math.round(oprex) === Math.round(prex) || lineData.push(prey)
+          oprex = prex
         }
       }
 
@@ -188,7 +201,7 @@
       }));
       //*/
 
-      return [ret, tick];
+      return [ret, tick, predict, graphics, fetchLineData];
     }
 
     function makeButtons(context) {
@@ -207,6 +220,16 @@
       buttons.push(context.add.image(400, 530, 'button').setInteractive());
       txtlen.push(context.add.text(385, 485, 'TPS',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
       txtlen.push(context.add.text(0, 505, '',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      // bottom row
+      buttons.push(context.add.image(250, 585, 'button').setInteractive());
+      txtlen.push(context.add.text(224, 540, 'Tracer',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      txtlen.push(context.add.text(237, 560, 'Off',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      buttons.push(context.add.image(400, 585, 'button').setInteractive());
+      txtlen.push(context.add.text(372, 540, '# Lines',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      txtlen.push(context.add.text(395, 560, '1',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      buttons.push(context.add.image(550, 585, 'button').setInteractive());
+      txtlen.push(context.add.text(510, 540, 'Prediction',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
+      txtlen.push(context.add.text(539, 560, 'On',  { fontFamily: "Calibri", fontSize: 20, color: "#AAAAAA" }));
       return [buttons, txtlen];
     }
 
@@ -214,7 +237,7 @@
         // get textures
         getTextures(this);
         // graph
-        this.add.image(574, 274,'graph');
+        this.add.image(574, 274,'graph').setDepth(-1);;
         var font = { fontFamily: "Calibri", fontSize: 11, color: "#777777" }
         this.add.text(435, 355, '0', font);
         this.add.text(530, 355, 'Time (s)', font);
@@ -222,9 +245,112 @@
         this.add.text(433, 275, '% Decayed', font).rotation=3*Math.PI/2; // radians
         this.add.text(428, 145, '100', font);
 
+
+        // stuff for the graph
+        var gridsize = 200; // grid size
+        var timelim = 20; // end of time on graph
+        var scale = gridsize / timelim;
+
+
+
         var back = makeButtons(this)
         var buttons = back[0];
-        window.len = back[1];
+        var len = back[1];
+        window.back = back;
+
+        // multiple lines
+        var line = 0;
+        window.lineDatas = [];
+        window.storedLines = [];
+        lineTps = [];
+        var handleLine = (l, d) => {
+          if (l) {
+            storedLines.push(l);
+            lineDatas.push(d);
+            lineTps.push(tps);
+            line++;
+          }
+          else {
+            if (storedLines.length >= Number(len[11].text)) {
+              storedLines.pop().destroy();
+              lineDatas.pop();
+              lineTps.pop();
+              line--;
+            }
+          }
+        }
+
+        // change # lines
+        buttons[7].on("pointerdown", () => {
+          len[11].text = (Number(len[11].text) % 3 + 1).toString();
+        });
+
+
+
+        // tracer
+
+        var g2 = this.add.graphics();
+
+        this.input.on('pointermove', pointer => {
+          window.pointer = pointer;
+          if(len[9].text === "On") {
+             g2.clear();
+            if(pointer.x >= 450 && pointer.x <= 650) {
+              g2.lineStyle(2, 0xFF7F00, 0.5);
+              g2.beginPath();
+              g2.moveTo(pointer.x, 150);
+              g2.lineTo(pointer.x, 350);
+              g2.closePath();
+              g2.strokePath();
+              g2.lineStyle(2, 0x0000FF, 1.0);
+              // find value(s)
+              posVals = [];
+              for(var i = 0; i < lineDatas.length; i++) {
+                var singleLineData = lineDatas[i]();
+                var pos;
+                if(lineTps[i] < scale) {
+                  pos = singleLineData[
+                    Math.round((pointer.x - 450)/lineTps[i]*scale)
+                  ];
+                }
+                else {
+                  pos = singleLineData[
+                    Math.round((pointer.x - 450))
+                  ];
+                }
+                var check = gridsize-pos+150;
+                if(check || check === 0) posVals.push(check);
+                else posVals.push("No Data");
+              console.log(posVals);
+              }
+            }
+          }
+        });
+
+        // turn tracer on/off
+        buttons[6].on("pointerdown", () => {
+          if(len[9].text === "On") {
+            len[9].text = "Off";
+            g2.clear();
+          }
+          else {
+            len[9].text = "On";
+          }
+          len[9].x = 224+(len[8].displayWidth-len[9].displayWidth)/2;
+        });
+
+        // turn prediction on/off
+        buttons[8].on("pointerdown", () => {
+          if(len[13].text === "On") {
+            len[13].text = "Off";
+            p(true);
+          }
+          else {
+            len[13].text = "On";
+            p();
+          }
+          len[13].x = 510+(len[12].displayWidth-len[13].displayWidth)/2;
+        });
 
         // tps
         var tps = 100;
@@ -317,22 +443,26 @@
             var oldw = len[5].displayWidth;
             if(len[5].text === "Start") len[5].text = "Stop";
             else len[5].text = "Start";
-            len[5].x = 360+(oldw-len[5].displayWidth)/2;
+            len[5].x = 362+(oldw-len[5].displayWidth)/2;
             on=!on;
           }
           else len[5].tint = "0xAA3333";  // wrong mode
         }).on("pointerup", () => len[5].tint=undefined); // reset tint
         var e;
         var tick;
+        var predict;
         var go = () => on;
 
         var restart = tps => {
-          var res = init(this, chance, font, go, tps);
+          var res = init(this, chance, font, go, tps, len[13].text==="On", line,
+            gridsize, timelim, scale);
           e = res[0];
           tick = res[1];
+          p = res[2];
+          handleLine(res[3], res[4]);
         }
         restart(tps);
-        var destroy = () => e.map(e => e.destroy());
+        var destroy = () => e.map(e => {e.destroy(); p(true), handleLine()});
     }
 
     </script>
