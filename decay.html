@@ -312,8 +312,9 @@
                 var pos;
                 if(lineTps[i] < scale) {
                   pos = singleLineData[
-                    Math.round((pointer.x - 450)/lineTps[i]*scale)
+                    Math.round((pointer.x - 450)*lineTps[i]/scale)
                   ];
+                  console.log(Math.round((pointer.x - 450)*lineTps[i]/scale))
                 }
                 else {
                   pos = singleLineData[
