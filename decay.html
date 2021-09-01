@@ -290,11 +290,13 @@
         // tracer
 
         var g2 = this.add.graphics();
+        var tracerText = this.add.text(0, 125, '',  { fontFamily: "Calibri", fontSize: 10, color: "#FF7F00" });
 
         this.input.on('pointermove', pointer => {
           window.pointer = pointer;
           if(len[9].text === "On") {
              g2.clear();
+             tracerText.text = "";
             if(pointer.x >= 450 && pointer.x <= 650) {
               g2.lineStyle(2, 0xFF7F00, 0.5);
               g2.beginPath();
@@ -321,8 +323,9 @@
                 var check = gridsize-pos+150;
                 if(check || check === 0) posVals.push(check);
                 else posVals.push("No Data");
-              console.log(posVals);
               }
+              tracerText.text = posVals.join(", ");
+              tracerText.x = pointer.x-tracerText.displayWidth/2
             }
           }
         });
@@ -332,6 +335,7 @@
           if(len[9].text === "On") {
             len[9].text = "Off";
             g2.clear();
+            tracerText.text = "";
           }
           else {
             len[9].text = "On";
