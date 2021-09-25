@@ -9,6 +9,6 @@
       }
     }
 </style>
-  <text x="0" y="15" fill="red" style="animation:rankAnimation 10s forwards ease-in-out 1;font-weight:bold">Simulations
+  <text x="0" y="25" fill="red" style="animation:rankAnimation 10s forwards ease-in-out 1;font-size:2em">Simulations
   </text>
 </svg>
