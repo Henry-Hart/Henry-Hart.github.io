@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" height="100" width="100">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgb(0,255,255);stop-opacity:1"></stop>
+      <stop offset="100%" style="stop-color:rgb(255,0,0);stop-opacity:1"></stop>
+    </linearGradient>
+  </defs>
+  <style>
+@keyframes e {
+      from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+    }
+</style>
+<circle cx="50" cy="50" r="40" fill="url(#grad1)" style="animation:e 1s forwards infinite linear;transform-origin: 50%;"></circle>
+  </svg>
