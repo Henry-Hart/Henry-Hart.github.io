@@ -1,4 +1,4 @@
-<svg height="30" width="200" xmlns="http://www.w3.org/2000/svg">
+<svg height="30" width="200" xmlns="http://www.w3.org/2000/svg"><g>
 	<style>
 @keyframes rankAnimation {
       from {
@@ -12,5 +12,5 @@
     }
 </style>
   <text xmlns="http://www.w3.org/2000/svg" x="0" y="25" fill="red" style="transform-origin:50%;animation:rankAnimation 10s forwards ease-in-out 1;font-size:2em;font-family: -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif,&quot;Apple Color Emoji&quot;,&quot;Segoe UI Emoji&quot;;font-weight: 600;">Simulations
-  </text>
+	</text></g>
 </svg>
