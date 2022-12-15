@@ -1,0 +1,16 @@
+{
+    "name": "food review",
+    "short_name": "food",
+    "description": "food reviewing app - written by HH",
+    "icons": [
+        {
+            "src": "icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "main.html",
+    "display": "fullscreen",
+    "theme_color": "#B12A34",
+    "background_color": "#B12A34"
+}
