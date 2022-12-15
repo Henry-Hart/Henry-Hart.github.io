@@ -4,12 +4,12 @@
     "description": "food reviewing app - written by HH",
     "icons": [
         {
-            "src": "icon-512.png",
+            "src": "/food_app/icon-512.png",
             "sizes": "512x512",
             "type": "image/png"
         }
     ],
-    "start_url": "main.html",
+    "start_url": "/food_app/index.html",
     "display": "fullscreen",
     "theme_color": "#B12A34",
     "background_color": "#B12A34"
