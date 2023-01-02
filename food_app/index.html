@@ -5,6 +5,96 @@
         navigator.serviceWorker.register('sw.js');
       }
     </script>
+    <script>
+
+      function load(thing)  {
+        console.log("loading "+thing+"...")
+        var ret;
+        return new Promise((resolve, reject) => {
+          var xhttp = new XMLHttpRequest();
+          xhttp.onloadend = () => {
+            console.log("eval "+thing+"...")
+            resolve(xhttp.responseText);
+          };
+          xhttp.open("GET", thing, true);
+          xhttp.send();
+        });
+      }
+
+      async function connect() {
+
+        var scope = new Object();
+
+        scope.debug = true;
+
+        var data = await load("https://cdn.jsdelivr.net/gh/subins2000/p2pt/dist/p2pt.umd.min.js");
+
+        // load p2pt in scope
+        eval(data.replace(".P2PT",";scope.P2PT"));
+        //eval(xhttp.responseText.replace(".P2PT",";scope.P2PT"));
+        //alert(1)
+        // begin connection
+
+        var log = scope.debug ? msg => {
+          if (typeof msg == 'object') {
+            console.log((JSON && JSON.stringify ? JSON.stringify(msg, undefined, 2) : msg) + '<br />');
+          } else {
+            console.log(msg);
+          }
+        } : msg => {}
+
+        // Find public WebTorrent tracker URLs here : https://github.com/ngosang/trackerslist/blob/master/trackers_all_ws.txt
+        var trackersAnnounceURLs = [
+          "wss://tracker.openwebtorrent.com",
+          "wss://tracker.files.fm:7073/announce",
+          "wss://spacetradersapi-chatbox.herokuapp.com:443/announce"
+        ]
+
+        // Unique id
+        var p2pt = new scope.P2PT(trackersAnnounceURLs, '{16305e80-b09e-4cfe-ade0-44b67841769c}')
+
+        scope.debug && (window.p2pt = p2pt);
+
+        // If a tracker connection was successful
+
+        p2pt.on('trackerconnect', (tracker, stats) => {
+          log('Connected to tracker : ' + tracker.announceUrl)
+          log('Tracker stats : ' + JSON.stringify(stats))
+          log('')
+        })
+
+        window.peersGlobal = [];
+
+        // If a new peer, send message
+        p2pt.on('peerconnect', peer => {
+          log("peer connected!")
+          peersGlobal.push(peer);
+        })
+
+        p2pt.on('peerclose', peer => {
+          peersGlobal.pop(peersGlobal.indexOf(peer));
+        })
+
+        var output = null;
+
+        // If message received from peer
+        p2pt.on('msg', (peer, msg) => {
+          if (!(peersGlobal.indexOf(peer)+1)) peersGlobal.push(peer);
+          log(`Got message from ${peer.id} : ${msg}`);
+          var data;
+          try {data=eval(msg)}
+          catch (e) {data=e}
+          if (data === undefined) data = "undefined"
+          else if (data === "") data = "\"\""
+          p2pt.send(peer, "RETURN: "+data);
+        })
+
+        log('P2PT started. My peer id : ' + p2pt._peerId);
+        p2pt.start();
+        //alert("started");
+      }
+
+    </script>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <meta charset="utf-8">
     <title>Food review</title>
