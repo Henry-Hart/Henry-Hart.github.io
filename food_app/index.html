@@ -2,5 +2,12 @@
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js');
       }
-    </script><script>b=val=>{old=window.connected;window.connected=val;old==connected||alert("---CONNECTION STATUS CHANGE---\n connected:"+window.connected)};a=()=>{x=new XMLHttpRequest();x.open("POST","/C");x.onreadystatechange=()=>{if(x.responseText)b(x.responseText.indexOf("~~~~~OK!")==0)};x.ontimeout=()=>{b(false)};x.timeout=3000;x.send()};setInterval(a,3000);function sendr(val){x=new XMLHttpRequest();x.open("POST",val);x.send();}</script></head><body style="background: hotpink;text-align: center;font-size: 10vw;"><div style="width: 50%;float: left;background: blue;" onclick="javascript:sendr('/L')">&lt;--</div><div style="width: 50%;float: right;background: red;" onclick="javascript:sendr('/H')">--&gt;</div><div style="width: 100%;background: yellow;" onclick="javascript:sendr('/S')">STOP</div>
+    </script><script>window.ip="http://192.168.4.1";b=val=>{old=window.connected;window.connected=val;old==connected||
+            alert("---CONNECTION STATUS CHANGE---\n connected:"+window.connected)};a=()=>{x=new XMLHttpRequest();x.open("POST",ip+"/C");
+                     x.onreadystatechange=()=>{if(x.responseText)b(x.responseText.indexOf("~~~~~OK!")==0)};x.ontimeout=()=>{b(false)};x.timeout=3000;x.send()};
+      setInterval(a,3000);function sendr(val){x=new XMLHttpRequest();x.open("POST",ip+val);x.send();}</script>
+      </head><body style="background: hotpink;text-align: center;font-size: 10vw;">
+      <div style="width: 50%;float: left;background: blue;" onclick="javascript:sendr(ip+'/L')">&lt;--</div>
+      <div style="width: 50%;float: right;background: red;" onclick="javascript:sendr(ip+'/H')">--&gt;</div>
+      <div style="width: 100%;background: yellow;" onclick="javascript:sendr(ip+'/S')">STOP</div>
 </body></html>
