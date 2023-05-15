@@ -1,6 +1,6 @@
 const cacheName = 'food_app';
 
-const appShellFiles = [
+const contentToCache = [
   '/food_app/',
   '/food_app/index.html',
   '/food_app/food.webmanifest',
@@ -11,7 +11,7 @@ const appShellFiles = [
 // Installing Service Worker
 self.addEventListener('install', (e) => {
   console.log('[Service Worker] Install');
-  /*e.waitUntil((async () => {
+  e.waitUntil((async () => {
     const cache = await caches.open(cacheName);
     console.log('[Service Worker] Caching all: app shell and content');
     try {
@@ -20,7 +20,7 @@ self.addEventListener('install', (e) => {
     catch (e) {
         console.log(e)
     }
-  })());*/
+  })());
 });
 
 // Fetching content using Service Worker
@@ -30,9 +30,9 @@ self.addEventListener('fetch', (e) => {
     console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
     if (r) return r;
     const response = await fetch(e.request);
-    const cache = await caches.open(cacheName);
-    console.log(`[Service Worker] Caching new resource: ${e.request.url}`);
-    cache.put(e.request, response.clone());
+    //const cache = await caches.open(cacheName);
+    //console.log(`[Service Worker] Caching new resource: ${e.request.url}`);
+    //cache.put(e.request, response.clone());
     return response;
   })());
 });
