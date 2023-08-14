@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BPhO 2023 Computational Challenge</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Style for menu items */
+    .grid-item > ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      background-color: #0078d4;
+      color: white;
+    }
+
+    .grid-item > ul > li {
+      padding: 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #005a9e;
+    }
+
+    /* Style for active menu items */
+    .grid-item li.active {
+      background-color: #005a9e;
+    }
+
+    /* Style for content section */
+    .content {
+      margin-left: 500px; /* Set the same width as the vertical nav bar */
+      padding: 20px;
+    }
+
+    /* Define the grid container */
+    .grid-container {
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr) minmax(500px, 6fr); /* Adjust the column width as needed */
+      gap: 10px; /* Adjust the gap between items as needed */
+      height: 100%;
+    }
+
+    .grid-container-smallmenu {
+      display: grid;
+      grid-template-columns: minmax(200px, 1fr) minmax(500px, 6fr); /* Adjust the column width as needed */
+      gap: 10px; /* Adjust the gap between items as needed */
+      height: 100%;
+    }
+
+    /* Style for grid items */
+    .grid-item {
+      background-color: #f2f2f2;
+      /* padding: 20px; */
+      text-align: center;
+      /* border: 1px solid #ccc; */
+      /* border-radius: 5px; */
+      position: relative; /* for absolute positioning of child */
+    }
+
+    .noselect {
+      -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none; /* Safari */
+        -khtml-user-select: none; /* Konqueror HTML */
+          -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+                user-select: none; /* Non-prefixed version, currently
+                                      supported by Chrome, Edge, Opera and Firefox */
+    }
+
+    #content_area {
+      height: 100%
+    }
+
+    .invisible {
+      /*display: none;*/
+      opacity: 0;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    html, body {
+      margin:0;
+      padding:0;
+      height:100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-container">
+    <!-- Vertical Navigation Bar -->
+    <nav class="grid-item noselect">
+      <ul>
+        <li class="active">Welcome</li>
+        <li>Challenge 1</li>
+        <li>Challenge 2</li>
+        <li>Challenge 3</li>
+        <li>Challenge 4</li>
+        <li>Challenge 5</li>
+        <li>Challenge 6</li>
+        <li>Challenge 7</li>
+        <li>Extensions</li>
+        <!-- Add more top-level menu items as needed -->
+      </ul>
+    </nav>
+
+    <!-- Second Menu -->
+    <nav class="grid-item noselect">
+      <ul>
+        <li class="active">Overview</li>
+        <li>Implementation details</li>
+        <!--li>Paper</li-->
+        <!-- Add more top-level menu items for the second menu as needed -->
+      </ul>
+    </nav>
+
+    <!-- Main Content Section -->
+    <div class="grid-item">
+      <div id="changeable_area" style="height: 100%">
+        <div id="loading">Preparing first load... 0%</div>
+      </div>
+      <div id="preloading" style="position:absolute;top:0;left:0;z-index:-1;width:100%;height:100%;opacity:0">
+      </div>
+      <!--button style="position: absolute;top: 0;left: 0;/*! opacity: 0; */z-index: 9;/*! border-color: red; */">Animate</button-->
+      <!--div style="position: absolute;top: 0;left: 0;/*! opacity: 0; */z-index: 9;/*! border-color: red; */">
+        <button onclick="animate_current();">Animate</button>
+        <button onclick="reset_current();">Reset</button>
+        <div id="animate_years">t = 0 years</div>
+      </div-->
+      <div id="animate_overlay" style="display: none; position: absolute;top: 0;left: 0;/*! opacity: 0; */z-index: 3;/*! border-color: red; */">
+        <button id="animate_playpause" onclick="animate_current();">Animate</button>
+        <button id="animate_resets" onclick="reset_current();">Reset</button>
+        <div style="display: inline;">Animation speed: </div><input id="animate_speed" value="1" type="" style="width: 2em;"><div style="display: inline;"> day/frame</div>
+        <div style="position: absolute;left: 0;"><div id="animate_years" style="text-align: start;">-- t = 0.0 years --</div><div style="display: none;color: darkred;" id="animate_lock">NOTE: display is locked when animating</div>
+      </div>
+      </div>
+    </div>
+  </div>
+  <script defer>
+
+    // TODO: add initial error handling
+
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+
+    const originalAddEventListener = EventTarget.prototype.addEventListener;
+
+
+    // Override the addEventListener function
+    /*EventTarget.prototype.addEventListener = function(type, listener, options) {
+      // Intercept only click event listeners for div elements
+      
+      if (1 || type === 'mousedown' || type === 'keydown' || type === 'keypress' || type == 'mousemove' || type == 'mouseenter' || type == 'mouseleave' || type == 'wheel') {
+        const newListener = function(event) {
+          // Add your custom behavior here before calling the original listener
+          //console.log('Intercepted click event on div:', event.target);
+          //console.log(event.type)
+          //if(1 || window["loc"] && window["loc"][0] !== 4) {
+          //  return listener.call(this, event);
+          //} else {
+            if(event.type === 'mouseenter' || event.type === 'mouseover') {
+              event.type = 'mousedown'
+            }
+            if(event.buttons !== 2 && event.key !== "Control" && event.type !== "wheel") {
+              //if (event.key) {console.log(event.key)}
+              listener.call(this, event)
+            } else {}
+          //}
+        };
+        originalAddEventListener.call(this, type, newListener, options);
+      } else {
+        originalAddEventListener.call(this, type, listener, options);
+      }
+    };*/
+
+
+    progress_div = document.getElementById("loading")
+
+    final_check = () => {
+      if (load_count === load_max - 1) {
+        load_script("main.js")
+      }
+    }
+
+    function load_script(url) {
+      a = document.createElement("script")
+      a.src = url
+      a.onload = () => {
+        progress_div.innerText = "Preparing first load... "+((++load_count/(load_max))*100).toPrecision(3)+"%"
+        final_check()
+      }
+      document.body.appendChild(a)
+    }
+
+    load_count = 0
+    load_max = 27
+    scripts = [
+      //"https://cdn.plot.ly/plotly-2.24.1.min.js",
+      "common.js",
+      "/scripts/challenge1.js",
+      "/scripts/challenge2.js",
+      "/scripts/challenge3.js",
+      "/scripts/challenge4.js",
+      "/scripts/challenge5.js",
+      "/scripts/challenge6.js",
+      "/scripts/challenge7.js",
+      "/scripts/g_r.js"
+    ]
+    for(i=0;i<scripts.length;i++)
+      load_script(scripts[i])
+
+    challenge_blob_data = [0, 0]
+    challenge_blob_blobs = [0, 0]
+    challenge_blob_urls = [0, 0]
+    challenge_blob_reqs = [0, 0]
+    blob_load_count = 0
+    blob_load_max = 15
+
+    function load_asset(url, mime, index) {
+      challenge_blob_reqs[index] = new XMLHttpRequest()
+      challenge_blob_reqs[index].open("GET", url)
+      //console.log(url, mime)
+      challenge_blob_reqs[index].onload = () => {
+        // TODO: verify atomicity ok
+        //console.log(index, url, challenge_blob_reqs[index].responseText)
+        challenge_blob_data[index] = [challenge_blob_reqs[index].responseText, mime]
+
+        // append to page to speed up challenge 6 & 7 loading
+        if (index == 0) {
+          // fetched style
+          style = document.createElement("style")
+          style.innerHTML = challenge_blob_data[0]
+          document.head.appendChild(style)
+          // override a few values
+          override = document.createElement("style")
+          override.innerHTML = `html, body {
+            font-family: Arial, sans-serif;
+            font-size: initial;
+            font-weight: initial;
+            line-height: initial;
+            color: Arial, initial;
+          }
+          canvas {
+            border: none;
+          }
+          `
+          document.head.appendChild(override)
+        }
+
+        blob_load_count++
+        if(blob_load_count == blob_load_max) {
+          for(i=0;i<assets.length;i++) {
+            challenge_blob_blobs[i] = new Blob(
+              [i == -1 ? challenge_blob_data[i][0].replace(
+                "-- REPLACE --styles.css", challenge_blob_urls[0]) : i == 6 ? 
+                challenge_blob_data[i][0].replace("https://d3js.org/d3.v5.min.js", challenge_blob_urls[3])
+                .replace("https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js", challenge_blob_urls[4])
+                .replace("relativity-experimental.js", challenge_blob_urls[5])
+                .replace("https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css", challenge_blob_urls[0])
+ : i == 12 ? challenge_blob_data[i][0].replace("https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css", 
+              challenge_blob_urls[0])
+                .replace("https://cdn.plot.ly/plotly-2.24.1.min.js", challenge_blob_urls[7])
+                .replace("challenge7.js", challenge_blob_urls[8]) 
+                .replace("https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js", challenge_blob_urls[9])
+                .replace("https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js", challenge_blob_urls[10])
+                .replace("https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js", challenge_blob_urls[11]) 
+                : i == 14 ? 
+                challenge_blob_data[i][0].replace("https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css", 
+              challenge_blob_urls[0]).replace("binary.js", challenge_blob_urls[13])
+              .replace("https://d3js.org/d3.v6.min.js", challenge_blob_urls[3])
+                : challenge_blob_data[i][0]], 
+              {type: challenge_blob_data[i][1]}
+              )
+            challenge_blob_urls[i] = URL.createObjectURL(challenge_blob_blobs[i]);
+
+            if(i==7) {
+              load_script(challenge_blob_urls[i])
+              load_count++
+              final_check()
+            }
+
+            load_count++;
+            final_check()
+          }
+        }
+      }
+      challenge_blob_reqs[index].send()
+    }
+    
+
+    assets = [
+      ["/other/styles.css", "text/css"],
+      //["/other/challenge6.html", "text/html"],
+      ["/other/challenge6div.html", "text/html"],
+      ["/other/challenge6script.js", "application/javascript"],
+      ["https://d3js.org/d3.v5.min.js", "application/javascript"],
+      ["https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js", "application/javascript"],
+      ["/menu_items/g_r/relativity-experimental.js", "application/javascript"],
+      ["/menu_items/g_r/relativity.html", "text/html"],
+      ["https://cdn.plot.ly/plotly-2.24.1.min.js", "application/javascript"],
+      ["/menu_items/challenge7/challenge7.js", "application/javascript"],
+      ["https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js", "application/javascript"],
+      ["https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js", "application/javascript"],
+      ["https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js", "application/javascript"],
+      ["/menu_items/challenge7/challenge7.html", "text/html"],
+      ["/menu_items/g_r/binary.js", "application/javascript"],
+      ["/menu_items/g_r/binary.html", "text/html"],
+    ]
+
+    for(i=0;i<assets.length;i++)
+      load_asset(assets[i][0], assets[i][1], i)
+    
+
+    setTimeout(()=>{
+      if (load_count != load_max)
+      document.getElementById("changeable_area").innerHTML += "<br><div>Sometimes this can break." +
+        " If the app still isn't loading, please <a href=\"javascript:window.location.reload(true);" +
+        "\">refresh the page</a></div>"
+    }, 7000);
+
+  </script>
+</body>
+</html>

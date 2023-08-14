@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.plot.ly/plotly-2.24.1.min.js" charset="utf-8"></script>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="flex-container">
+            <!-- TODO: align center these -->
+            <div class="hh-graph">
+                <div id="chart" class="hh-graph"></div>
+            </div>
+            <div class="hh-graph">
+                <div id="chart2" class="hh-graph"></div>
+            </div>
+            <div style="display: grid;"><button onclick="window.animate(scope.data, 'chart')">Animate chart</button></div>
+            <div style="display: grid;"><button onclick="window.animate(scope.data2, 'chart2')">Animate chart2</button></div>
+        </div>
+        <script src="script.js">
+        </script>
+    </body>
+</html>

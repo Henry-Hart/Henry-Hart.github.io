@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N-Body Simulation</title>
+    <!-- Load the D3.js library -->
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f2f2f2;
+        }
+        svg {
+            display: block;
+            background-color: white;
+            border:1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Your SVG or other visual elements will be appended here by D3 -->
+<div id="timeDisplay">Time: 0 days</div>
+
+<label for="systemSelect">System:</label>
+<select id="systemSelect">
+    <option value="kepler35">Kepler-35</option>
+    <option value="kepler34">Kepler-34</option>
+</select> <button id="pauseButton">▶️</button> <button id="resetButton">Reset</button> <label for="tickrate">days/frame:</label><input value="0.07" id="tickrate" style="width: 3em;">
+<div id="svgContainer"></div>
+Data sourced from:
+<div><a href="https://en.wikipedia.org/wiki/Kepler-34" target="_blank">https://en.wikipedia.org/wiki/Kepler-34</a></div>
+<div><a href="https://en.wikipedia.org/wiki/Kepler-35" target="_blank">https://en.wikipedia.org/wiki/Kepler-35</a></div>
+<div><a href="https://www.openexoplanetcatalogue.com/planet/Kepler-34%20(AB)%20b/" target="_blank">https://www.openexoplanetcatalogue.com/planet/Kepler-34%20(AB)%20b/</a></div>
+<div style="width: 40px;height: 40px;background-color: #3498db;color: #fff;border-radius: 50%;display: flex;align-items: center;justify-content: center;cursor: pointer;box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);position: absolute;top: 10px;right: 10px;font-size: large;">?</div>
+
+<!-- Load your JavaScript file -->
+<script src="binary.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mercury Orbiting the Sun</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="relativity-experimental.js" defer></script>
+    <style>
+        svg {
+            border: 1px solid #ccc
+        }
+        body {
+            background-color: #f2f2f2;
+        }
+        canvas {
+            display:none
+        }
+    </style>
+</head>
+
+<body>
+    <b>General Relativity - Mercury's orbit</b>
+    <br>
+    <button id="clearButton">Clear</button>
+    <button id="toggleAnimation">Play</button>
+    <button id="resetButton">Reset</button>
+    Integrator: 
+    <select id="methodSelector">
+        <option value="euler">Euler</option>
+        <option value="rk4">RK4</option>
+    </select>
+    Line style: 
+    <select id="lineSelector">
+        <option value="spline">Cubic spline</option>
+        <option value="edgetoedge">Edge-to-edge</option>
+    </select>
+    Time step:
+    <input type="number" id="timeStep" value="2.31"> days
+    <br><br>
+    Speed of light: <input type="number" id="cInput" value="300000"> m/s (NB: advised not to let this go below 10^5)
+    <div style="width: 40px;height: 40px;background-color: #3498db;color: #fff;border-radius: 50%;display: flex;align-items: center;justify-content: center;cursor: pointer;box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);position: absolute;top: 10px;right: 10px;font-size: large;">?</div>
+</body>
+
+</html>

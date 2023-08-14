@@ -1,0 +1,97 @@
+#galaxyContainer {
+    user-select: none;
+    display: flex;
+    clear:both;
+    flex-direction: column;
+    align-items: center; /* Center the elements horizontally */
+    justify-content: center; /* Center the elements vertically */
+
+    float:left;
+}
+
+canvas {
+    border: 1px solid rgb(195, 195, 195);
+    margin-bottom: 10px;
+}
+
+#timeTicker {
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 16px;
+    font-weight: light;
+}
+
+#mainContainer {
+    display: flex;
+    align-items: start;
+}
+
+#orbitCanvas {
+    border: 1px solid #ccc; /* Optional: for visual separation */
+}
+
+#customOptionsContainer {
+    display: grid;
+    grid-template-rows: 1fr 1fr; /* Split the container into two equal rows */
+    gap: 10px; /* Spacing between the custom A and B options */
+    margin-left: 10px; /* Space between the canvas and custom options */
+}
+
+.custom-options {
+    border: 1px solid #ccc;
+    padding: 10px;
+}
+
+.custom-options input {
+    display: block;
+    margin-bottom: 10px; /* Add some spacing between input fields */
+}
+
+#challenge7container {
+    clear: both;
+    display: block;
+    justify-content: center;
+}
+
+#keplerGraph  {
+    margin-right: 5px;  /* Adjust as needed for spacing between the canvases */
+    border: 1px solid #ccc;  /* Optional, just to visualize the canvas boundaries */
+}
+
+#ptolemyGraph {
+    border: 1px solid #ccc;
+}
+/* Custom Dropdown */
+.custom-dropdown {
+    position: relative;
+    display: inline-block;
+    width: 200px;
+    user-select: none;
+}
+
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #f9f9f9;
+    width: 100%;
+    z-index: 1;
+    border: 1px solid #ddd;
+}
+
+/* Style for labels in the dropdown */
+.dropdown-menu label {
+    display: block;
+    cursor: pointer;
+    user-select: none;
+    display: inline-block;
+}
+
+/* Remove focus border and shadow from dropdown button */
+.dropdown-toggle:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+

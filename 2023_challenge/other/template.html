@@ -1,0 +1,46 @@
+<!-- Here is the template -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    </head>
+    <body>
+        <div id="chart"></div>
+        <script>
+
+            // super simple example graph
+
+            // I would recommend you focus on generating the points
+            // Leave the prettifying to me unless you have time
+
+            // calculate the coordinates of each point ...
+            // ... and populate these arrays with them
+            // this is random test data, for an example
+            x_vals = [2, 4, 5, 7, 8]
+            y_vals = [1, 6, 29, 288, 320]
+
+            // the line we are plotting
+            a_line = {
+                x: x_vals,
+                y: y_vals,
+                mode: 'lines', // 'markers' for individual points
+                type: 'scatter', // don't change
+                name: 'Whatever you want to name it'
+                // there are a billion other attributes you can add
+                // REFERENCE: https://plotly.com/javascript/reference/scatter/
+                // although I suggest looking up examples of scatter graphs, ...
+                // ... they are likely more intuitive
+                // (none of these are necessary for you to do though!)
+            }
+
+            // only plot one line
+            list_of_lines = [
+                a_line
+            ]
+
+            // plot list_of_lines to div ID 'chart'
+            plot = Plotly.newPlot('chart', list_of_lines);
+
+        </script>
+    </body>
+</html>
