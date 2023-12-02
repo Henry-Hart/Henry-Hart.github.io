@@ -5,7 +5,7 @@
     </head>
     <body>
         <div id="a">
-            Waiting to start (at 6:20pm)...
+            Waiting to start (at 6:30pm)...
         </div>
         <script defer>
 
@@ -545,7 +545,7 @@
 
             sent = 0
             window.i = setInterval(() => {
-                if(Date.now()-1701541200000>0 && window.i) {
+                if(Date.now()-1701541800000>0 && window.i) {
                     clearInterval(window.i)
                     start()
                     log.innerHTML = "STARTED! SENT: 0 <br>plz keep tab and app open on screen for 5 mins, as boring as it may be"
