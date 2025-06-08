@@ -10,7 +10,7 @@
         }
     ],
     "start_url": "/pwa-examples/js13kpwa/index.html",
-    "display": "fullscreen",
+    "display": "standalone",
     "theme_color": "#EFE4B0",
     "background_color": "#EFE4B0"
 }
