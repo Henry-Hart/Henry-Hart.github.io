@@ -134,9 +134,10 @@ html, body {
 			xhr.onload = function() {
 				if (xhr.status === 200) {
 					var a = document.getElementById("inpLock");
-					if(xhr.responseText === "~~~~~ON!")
-						a.checked = false
-					else a.checked = true
+					//if(xhr.responseText === "~~~~~ON!")
+					//	a.checked = false
+					//else a.checked = true
+					a.checked = !a.checked
 					loading = false
 					return true
 				} else {
@@ -180,7 +181,7 @@ html, body {
 <script defer>
 // Registering Service Worker
 if ('serviceWorker' in navigator) {
-	alert(1);
+	//alert(1);
   navigator.serviceWorker.register('/pwa-examples/js13kpwa/sw.js');
 }
 </script>
