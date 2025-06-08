@@ -1,0 +1,16 @@
+{
+    "name": "Butter PROTECT",
+    "short_name": "Butter",
+    "description": "Protecting my butter",
+    "icons": [
+        {
+            "src": "icons/icon-128.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/pwa-examples/js13kpwa/index.html",
+    "display": "fullscreen",
+    "theme_color": "#EFE4B0",
+    "background_color": "#EFE4B0"
+}
